@@ -21,12 +21,6 @@ public class UserController {
     private final UserService service;
     private final UserMapper mapper;
 
-    @PostMapping
-    public ResponseEntity<UserDTO> createUser(@Valid @RequestBody UserDTO dto) {
-        User toSave = mapper.toEntity(dto);
-        User saved = service.createUser(toSave);
-        return ResponseEntity.status(HttpStatus.CREATED).body(mapper.toDTO(saved));
-    }
 
     @GetMapping
     public ResponseEntity<List<UserDTO>> getAllUsers() {

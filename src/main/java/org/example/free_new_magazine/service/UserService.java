@@ -18,7 +18,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
     public User createUser(User user) {
-        // Unikal maydonlarni tekshirish
+
         if (user.getEmail() != null && repository.existsByEmail(user.getEmail())) {
             throw new ResourceAlreadyExistsException("Email already in use");
         }
@@ -26,7 +26,6 @@ public class UserService {
             throw new ResourceAlreadyExistsException("Username already in use");
         }
 
-        // Parolni xeshlash
         if (user.getPassword() != null && !user.getPassword().isBlank()) {
             user.setPassword(passwordEncoder.encode(user.getPassword()));
         }
@@ -50,12 +49,11 @@ public class UserService {
     public User updateUser(Long id, User user) {
         User existing = getUserById(id);
 
-        // Email o'zgarayotgan bo'lsa va boshqa foydalanuvchiga tegishli bo'lsa — xatolik
         if (user.getEmail() != null && !user.getEmail().equals(existing.getEmail())
                 && repository.existsByEmail(user.getEmail())) {
             throw new ResourceAlreadyExistsException("Email already in use");
         }
-        // Username bo'yicha ham tekshirish
+
         if (user.getUsername() != null && !user.getUsername().equals(existing.getUsername())
                 && repository.existsByUsername(user.getUsername())) {
             throw new ResourceAlreadyExistsException("Username already in use");

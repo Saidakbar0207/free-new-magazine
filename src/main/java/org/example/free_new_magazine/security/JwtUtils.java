@@ -5,17 +5,18 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import lombok.Builder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 import java.util.UUID;
 
 @Component
-@Builder
 public class JwtUtils {
-
-    private final String secretKeyWord = UUID.randomUUID().toString();
+    @Value("@{jwt.secret-key}")
+    private  String secretKeyWord;
 
     public String generateToken(String username) {
         Date now = new Date();
@@ -24,26 +25,27 @@ public class JwtUtils {
                 .setSubject(username)
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
-                .signWith(SignatureAlgorithm.HS256, generateKey())
+                .signWith(getSigningKey(),SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    private Key generateKey() {
-        return Keys.hmacShaKeyFor(secretKeyWord.getBytes());
+    private Key getSigningKey() {
+        byte[] keyBytes = secretKeyWord.getBytes(StandardCharsets.UTF_8);
+        return Keys.hmacShaKeyFor(keyBytes);
     }
 
 
     public boolean isValidToken(String token) {
         try {
             Claims body = Jwts.parserBuilder()
-                    .setSigningKey(generateKey())
+                    .setSigningKey(getSigningKey())
                     .build()
                     .parseClaimsJws(token)
                     .getBody();
             Date expiration = body.getExpiration();
             return expiration.after(new Date());
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("Invalid token" + e.getMessage());
             return false;
         }
     }
@@ -51,7 +53,7 @@ public class JwtUtils {
     public String getSubject(String token) {
         try {
             return Jwts.parserBuilder()
-                    .setSigningKey(generateKey())
+                    .setSigningKey(getSigningKey())
                     .build()
                     .parseClaimsJws(token)
                     .getBody().getSubject();
