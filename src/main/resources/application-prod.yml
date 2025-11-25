@@ -1,0 +1,13 @@
+# application-prod.yml
+spring:
+  datasource:
+    url: jdbc:postgresql://prod-host:5432/free_magazine
+    username: postgres
+    password: Saidakbar123
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+server:
+  port: 8082
