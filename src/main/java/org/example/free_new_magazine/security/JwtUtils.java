@@ -15,7 +15,7 @@ import java.util.UUID;
 
 @Component
 public class JwtUtils {
-    @Value("@{jwt.secret-key}")
+    @Value("${jwt.secret-key}")
     private  String secretKeyWord;
 
     public String generateToken(String username) {

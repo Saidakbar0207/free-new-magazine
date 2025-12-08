@@ -13,7 +13,6 @@ import java.util.Objects;
 @Getter
 @Setter
 @ToString
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Post {
@@ -39,11 +38,13 @@ public class Post {
     @ToString.Exclude
     private User author;
 
+
     private Long views = 0L;
 
     private Boolean featured = false;
 
     @Enumerated(EnumType.STRING)
+
     private PostStatus status;
 
     private Boolean isDeleted =false;

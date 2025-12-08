@@ -1,44 +1,87 @@
 package org.example.free_new_magazine.service;
 
+import lombok.RequiredArgsConstructor;
+import org.example.free_new_magazine.dto.CommentDTO;
 import org.example.free_new_magazine.entity.Comment;
+import org.example.free_new_magazine.entity.Post;
+import org.example.free_new_magazine.entity.Role;
+import org.example.free_new_magazine.entity.User;
+import org.example.free_new_magazine.exception.ResourceNotFoundException;
+import org.springframework.security.access.AccessDeniedException;
+import org.example.free_new_magazine.mapper.CommentMapper;
 import org.example.free_new_magazine.repository.CommentRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class CommentService {
 
     private final CommentRepository commentRepository;
+    private final CommentMapper  commentMapper;
+    private final CurrentUserService currentUserService;
+    private final AuditLogService auditLogService;
+    private final PostService postService;
 
-    public CommentService(CommentRepository commentRepository) {
-        this.commentRepository = commentRepository;
+
+
+    public List<CommentDTO> getAllComments() {
+        return commentRepository.findAll()
+                .stream()
+                .map(commentMapper::toDTO)
+                .collect(Collectors.toList());
     }
 
-    public List<Comment> getAllComments() {
-        return commentRepository.findAll();
+    public CommentDTO getCommentById(Long id) {
+        Comment comment = commentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Comment not found with id " + id));
+        return commentMapper.toDTO(comment);
     }
 
-    public Optional<Comment> getCommentById(Long id) {
-        return commentRepository.findById(id);
+
+
+    public CommentDTO createComment(CommentDTO commentDTO) {
+        User user =  currentUserService.getCurrentUser();
+        Post post = postService.getPostEntityById(commentDTO.getPostId());
+        Comment comment = commentMapper.toEntity(commentDTO);
+        comment.setUser(user);
+        comment.setPost(post);
+        Comment saved =  commentRepository.save(comment);
+        auditLogService.log("CREATE_COMMENT", "/comments");
+
+        return commentMapper.toDTO(saved);
     }
 
-    public Comment createComment(Comment comment) {
-        return commentRepository.save(comment);
+    public CommentDTO updateComment(Long id, Comment commentDTO){
+        User user = currentUserService.getCurrentUser();
+        Comment  comment = commentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Comment not found with id " + id));
+
+        if(!comment.getUser().getId().equals(user.getId()) && user.getRole() != Role.ROLE_ADMIN) {
+            throw new AccessDeniedException("You are not allowed to update this comment");
+        }
+        String oldContent = commentDTO.getContent();
+        comment.setContent(commentDTO.getContent());
+        Comment updated = commentRepository.save(comment);
+        auditLogService.log("UPDATE_COMMENT", "/comments");
+
+        return commentMapper.toDTO(updated);
+
     }
 
-    public Comment updateComment(Long id, Comment updatedComment) {
-        return commentRepository.findById(id)
-                .map(comment -> {
-                    comment.setContent(updatedComment.getContent());
-                    return commentRepository.save(comment);
-                })
-                .orElseThrow(() -> new RuntimeException("Comment not found with id " + id));
-    }
 
     public void deleteComment(Long id) {
+        User user = currentUserService.getCurrentUser();
+        Comment comment = commentRepository.findById(id)
+                        .orElseThrow(() -> new ResourceNotFoundException("Comment not found with id " + id));
+
+        if(!comment.getUser().getId().equals(user.getId()) && user.getRole() != Role.ROLE_ADMIN) {
+            throw new AccessDeniedException("You are not allowed to delete this comment ");
+        }
         commentRepository.deleteById(id);
+        auditLogService.log("DELETE_COMMENT", "/comments");
     }
 
     public List<Comment> getCommentsByPostId(Long postId) {

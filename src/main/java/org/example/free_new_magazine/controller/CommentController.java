@@ -1,6 +1,7 @@
 package org.example.free_new_magazine.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.example.free_new_magazine.dto.CommentDTO;
 import org.example.free_new_magazine.entity.Comment;
 import org.example.free_new_magazine.service.CommentService;
 import org.springframework.http.HttpStatus;
@@ -18,14 +19,14 @@ public class CommentController {
     private final CommentService commentService;
 
     @GetMapping
-    public List<Comment> getAllComments() {
+    public List<CommentDTO> getAllComments() {
         return commentService.getAllComments();
     }
 
 
     @GetMapping("/{id}")
-    public ResponseEntity<Optional<Comment>> getCommentById(@PathVariable Long id) {
-        return ResponseEntity.ok(commentService.getCommentById(id));
+    public ResponseEntity<Optional<CommentDTO>> getCommentById(@PathVariable Long id) {
+        return ResponseEntity.ok(Optional.ofNullable(commentService.getCommentById(id)));
     }
 
 
@@ -36,14 +37,14 @@ public class CommentController {
 
 
     @PostMapping
-    public ResponseEntity<Comment> createComment(@RequestBody Comment comment) {
+    public ResponseEntity<CommentDTO> createComment(@RequestBody CommentDTO commentDTO) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(commentService.createComment(comment));
+                .body(commentService.createComment(commentDTO));
     }
 
 
     @PutMapping("/{id}")
-    public ResponseEntity<Comment> updateComment(
+    public ResponseEntity<CommentDTO> updateComment(
             @PathVariable Long id,
             @RequestBody Comment comment
     ) {

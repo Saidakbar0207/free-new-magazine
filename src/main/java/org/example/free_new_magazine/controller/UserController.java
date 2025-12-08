@@ -24,17 +24,13 @@ public class UserController {
 
     @GetMapping
     public ResponseEntity<List<UserDTO>> getAllUsers() {
-        List<UserDTO> result = service.getAllUsers()
-                .stream()
-                .map(mapper::toDTO)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(service.getAllUsers());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<UserDTO> getUserById(@PathVariable Long id) {
-        User user = service.getUserById(id);
-        return ResponseEntity.ok(mapper.toDTO(user));
+        UserDTO user = service.getUserById(id);
+        return ResponseEntity.ok(user);
     }
 
     @GetMapping("/email/{email}")
@@ -45,9 +41,8 @@ public class UserController {
 
     @PutMapping("/{id}")
     public ResponseEntity<UserDTO> updateUser(@PathVariable Long id, @Valid @RequestBody UserDTO dto) {
-        User patch = mapper.toEntity(dto);
-        User updated = service.updateUser(id, patch);
-        return ResponseEntity.ok(mapper.toDTO(updated));
+        UserDTO updated = service.updateUser(id, dto);
+        return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/{id}")
