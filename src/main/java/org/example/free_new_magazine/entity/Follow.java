@@ -20,10 +20,12 @@ public class Follow {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "follower_id", nullable = false)
+    @ToString.Exclude
     private User follower;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "following_id", nullable = false)
+    @ToString.Exclude
     private User following;
 
     private LocalDateTime createdAt;

@@ -27,12 +27,12 @@ public class SwaggerConfig {
                         .contact(new Contact()
                                 .name("Nematullayev Saidakbar")
                                 .email("nematullayevsaidakbar832@gmail.com")
-                                .url("T.me/Nematullaev_0207")
+                                .url("www.linkedin.com/in/saidakbar-nematullayev-b5855b2a2")
                         )
                         .license(new License().name("Apache 2.0").url("http://springdoc.org"))
                 )
                 .servers(List.of(
-                        new Server().url("http://localhost:8080").description("Development server")
+                        new Server().url("http://localhost:8090").description("Development server")
 
                 ))
                 .addSecurityItem(new SecurityRequirement().addList(SECURITY_SCHEME_NAME))

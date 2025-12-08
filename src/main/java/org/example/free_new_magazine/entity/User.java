@@ -18,7 +18,7 @@ import java.util.Objects;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
     @Column(nullable = false)
     private String firstName;
@@ -51,8 +51,9 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Role role;
 
+    @Builder.Default
     private Boolean  isActive = true;
-
+    @Builder.Default
     private Boolean isDeleted = false;
 
     private LocalDateTime createdDate;
