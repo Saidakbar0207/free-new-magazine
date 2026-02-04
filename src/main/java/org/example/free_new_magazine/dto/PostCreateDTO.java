@@ -6,10 +6,12 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class PostDTO {
+public class PostCreateDTO {
 
     @NotBlank(message = "Title cannot be blank")
     private String title;
@@ -19,5 +21,10 @@ public class PostDTO {
 
     @NotNull(message = "Category id is required")
     private Long categoryId;
+
+    private List<String> tags;
+    private List<String> images;
+    private List<String> videos;
+
 
 }

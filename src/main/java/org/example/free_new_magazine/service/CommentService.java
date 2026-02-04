@@ -28,6 +28,10 @@ public class CommentService {
 
 
     public List<CommentDTO> getAllComments() {
+        User user = currentUserService.getCurrentUser();
+        if(user.getRole() != Role.ROLE_ADMIN) {
+            throw new AccessDeniedException("Only ADMIN can manage comments");
+        }
         return commentRepository.findAll()
                 .stream()
                 .map(commentMapper::toDTO)
@@ -54,7 +58,7 @@ public class CommentService {
         return commentMapper.toDTO(saved);
     }
 
-    public CommentDTO updateComment(Long id, Comment commentDTO){
+    public CommentDTO updateComment(Long id, CommentDTO commentDTO){
         User user = currentUserService.getCurrentUser();
         Comment  comment = commentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Comment not found with id " + id));
@@ -62,7 +66,6 @@ public class CommentService {
         if(!comment.getUser().getId().equals(user.getId()) && user.getRole() != Role.ROLE_ADMIN) {
             throw new AccessDeniedException("You are not allowed to update this comment");
         }
-        String oldContent = commentDTO.getContent();
         comment.setContent(commentDTO.getContent());
         Comment updated = commentRepository.save(comment);
         auditLogService.log("UPDATE_COMMENT", "/comments");
@@ -84,7 +87,9 @@ public class CommentService {
         auditLogService.log("DELETE_COMMENT", "/comments");
     }
 
-    public List<Comment> getCommentsByPostId(Long postId) {
-        return commentRepository.findByPostId(postId);
+    public List<CommentDTO> getCommentsByPostId(Long postId) {
+        return commentRepository.findByPostId(postId).stream()
+                .map(commentMapper::toDTO)
+                .toList();
     }
 }

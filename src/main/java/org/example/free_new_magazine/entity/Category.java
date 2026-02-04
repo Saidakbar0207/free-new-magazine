@@ -8,7 +8,8 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity
-@Table(name = "categories")
+@Table(name = "categories",
+uniqueConstraints = @UniqueConstraint(columnNames = {"name"}))
 @Getter
 @Setter
 @ToString
@@ -28,6 +29,9 @@ public class Category {
     private Boolean isActive;
 
     private Boolean isDeleted;
+
+
+    private String code;
 
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;
@@ -58,4 +62,5 @@ public class Category {
     public final int hashCode() {
         return this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass().hashCode() : getClass().hashCode();
     }
+
 }

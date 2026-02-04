@@ -23,7 +23,7 @@ public class CustomUserDetails implements UserDetails {
     public String getPassword() { return user.getPassword(); }
 
     @Override
-    public String getUsername() { return user.getEmail(); }
+    public String getUsername() { return user.getUsername(); }
 
     @Override
     public boolean isAccountNonExpired() { return true; }
@@ -37,5 +37,5 @@ public class CustomUserDetails implements UserDetails {
     @Override
     public boolean isEnabled() { return true; }
 
-    public Integer getId(){ return user.getId(); }
+    public Long getId(){ return user.getId(); }
 }

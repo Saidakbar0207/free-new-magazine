@@ -1,5 +1,6 @@
 package org.example.free_new_magazine.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.free_new_magazine.dto.CommentDTO;
 import org.example.free_new_magazine.entity.Comment;
@@ -25,19 +26,20 @@ public class CommentController {
 
 
     @GetMapping("/{id}")
-    public ResponseEntity<Optional<CommentDTO>> getCommentById(@PathVariable Long id) {
-        return ResponseEntity.ok(Optional.ofNullable(commentService.getCommentById(id)));
+    public ResponseEntity<CommentDTO> getCommentById(@PathVariable Long id) {
+        return ResponseEntity.ok(commentService.getCommentById(id));
     }
 
 
     @GetMapping("/post/{postId}")
-    public List<Comment> getCommentsByPost(@PathVariable Long postId) {
+    public List<CommentDTO> getCommentsByPost(@PathVariable Long postId) {
         return commentService.getCommentsByPostId(postId);
     }
 
 
     @PostMapping
-    public ResponseEntity<CommentDTO> createComment(@RequestBody CommentDTO commentDTO) {
+    public ResponseEntity<CommentDTO> createComment(
+            @Valid @RequestBody CommentDTO commentDTO) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(commentService.createComment(commentDTO));
     }
@@ -45,10 +47,10 @@ public class CommentController {
 
     @PutMapping("/{id}")
     public ResponseEntity<CommentDTO> updateComment(
-            @PathVariable Long id,
-            @RequestBody Comment comment
+            @Valid @PathVariable Long id,
+            @RequestBody CommentDTO commentDTO
     ) {
-        return ResponseEntity.ok(commentService.updateComment(id, comment));
+        return ResponseEntity.ok(commentService.updateComment(id, commentDTO));
     }
 
 

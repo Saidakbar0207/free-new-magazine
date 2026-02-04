@@ -1,7 +1,9 @@
 package org.example.free_new_magazine.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.example.free_new_magazine.dto.FollowDTO;
 import org.example.free_new_magazine.entity.Follow;
+import org.example.free_new_magazine.mapper.FollowMapper;
 import org.example.free_new_magazine.service.FollowService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,8 +24,9 @@ public class FollowController {
     }
 
     @PostMapping
-    public ResponseEntity<Follow> createFollow(@RequestBody Follow follow) {
-        Follow savedFollow = followService.createFollow(follow);
+    public ResponseEntity<FollowDTO> createFollow(@RequestBody FollowDTO follow) {
+
+        FollowDTO savedFollow = followService.createFollow(follow);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedFollow);
     }
 

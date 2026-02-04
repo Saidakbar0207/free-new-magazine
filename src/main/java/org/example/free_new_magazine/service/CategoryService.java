@@ -22,6 +22,13 @@ public class CategoryService {
     private final CurrentUserService currentUserService;
     private final AuditLogService auditLogService;
 
+    private void requiredAdmin(){
+        User user = currentUserService.getCurrentUser();
+        if(user.getRole() != Role.ROLE_ADMIN) {
+            throw  new AccessDeniedException("Only ADMIN can manage category");
+        }
+    }
+
 
     public List<CategoryDTO> getAllCategories() {
         return categoryRepository.findAll()
@@ -37,11 +44,7 @@ public class CategoryService {
     }
 
     public CategoryDTO createCategory(CategoryDTO categoryDTO)  {
-        User user = currentUserService.getCurrentUser();
-        if(user.getRole() != Role.ROLE_ADMIN) {
-            throw  new AccessDeniedException("Only ADMIN can create category");
-        }
-
+        requiredAdmin();
         Category category = categoryMapper.toEntity(categoryDTO);
         Category savedCategory = categoryRepository.save(category);
         auditLogService.log("CREATE_CATEGORY","/categories");
@@ -49,29 +52,22 @@ public class CategoryService {
     }
 
     public CategoryDTO updateCategory(Long id, CategoryDTO categoryDTO) {
-        User user = currentUserService.getCurrentUser();
-        if(user.getRole() != Role.ROLE_ADMIN) {
-            throw  new AccessDeniedException("Only ADMIN can create category");
-        }
+        requiredAdmin();
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + id));
         category.setName(categoryDTO.getName());
         category.setDescription(categoryDTO.getDescription());
 
         Category updated = categoryRepository.save(category);
-        auditLogService.log("UPDATE_CATEGORY","/categories" + id);
+        auditLogService.log("UPDATE_CATEGORY","/categories/" + id);
         return categoryMapper.toDTO(updated);
     }
 
     public void deleteCategory(Long id) {
-        User user = currentUserService.getCurrentUser();
-        if(user.getRole() != Role.ROLE_ADMIN) {
-            throw  new AccessDeniedException("Only ADMIN can delete category");
-        }
-
+       requiredAdmin();
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + id));
         categoryRepository.delete(category);
-        auditLogService.log("DELETE_CATEGORY","/categories" + id);
+        auditLogService.log("DELETE_CATEGORY","/categories/" + id);
     }
 }

@@ -1,7 +1,12 @@
 package org.example.free_new_magazine.service;
 
+import jakarta.validation.Valid;
+import jakarta.ws.rs.BadRequestException;
 import lombok.RequiredArgsConstructor;
 import org.example.free_new_magazine.dto.UserDTO;
+import org.example.free_new_magazine.dto.UserMeResponseDTO;
+import org.example.free_new_magazine.dto.UserMeUpdateRequestDTO;
+import org.example.free_new_magazine.dto.UserResponseDTO;
 import org.example.free_new_magazine.entity.Role;
 import org.example.free_new_magazine.entity.User;
 import org.example.free_new_magazine.exception.ResourceAlreadyExistsException;
@@ -11,6 +16,7 @@ import org.example.free_new_magazine.repository.UserRepository;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -20,94 +26,148 @@ import java.util.stream.Collectors;
 public class UserService {
 
     private final UserRepository repository;
-    private final UserMapper mapper;
     private final CurrentUserService currentUserService;
     private final AuditLogService auditLogService;
     private final PasswordEncoder passwordEncoder;
+    private final UserMapper userMapper;
+    private final StorageService storageService;
 
-    public List<UserDTO> getAllUsers() {
+    public List<UserResponseDTO> getAllUsers() {
         User user = currentUserService.getCurrentUser();
         if(user.getRole() != Role.ROLE_ADMIN) {
             throw new AccessDeniedException("Only ADMIN can create category");
         }
         return repository.findAll()
-                .stream()
-                .map(mapper::toDTO)
+                .stream().map(userMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
-
-    public UserDTO getUserById(Long id) {
+    public UserResponseDTO getUserById(Long id) {
         User user = getUserEntityById(id);
-
         User currentUser = currentUserService.getCurrentUser();
-        if(!user.getId().equals(currentUser.getId()) && user.getRole() != Role.ROLE_ADMIN) {
+        if(!user.getId().equals(currentUser.getId()) && currentUser.getRole() != Role.ROLE_ADMIN) {
             throw new AccessDeniedException("You are not allowed to view this user");
         }
 
-        return mapper.toDTO(user);
+        return userMapper.toResponse(user);
     }
 
-    private User getUserEntityById(Long id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+    public UserMeResponseDTO getMe(){
+        User user = currentUserService.getCurrentUser();
+        return userMapper.toMeResponse(user);
     }
 
-    public User createUser(User user) {
-
-        if (user.getEmail() != null && repository.existsByEmail(user.getEmail())) {
-            throw new ResourceAlreadyExistsException("Email already in use");
-        }
-        if (user.getUsername() != null && repository.existsByUsername(user.getUsername())) {
-            throw new ResourceAlreadyExistsException("Username already in use");
-        }
-
-        if (user.getPassword() != null && !user.getPassword().isBlank()) {
-            user.setPassword(passwordEncoder.encode(user.getPassword()));
-        }
-        return repository.save(user);
-    }
-
-    public User getUserByEmail(String email) {
-        return repository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-    }
-
-    public UserDTO updateUser(Long id, UserDTO userDTO) {
-        User existing = getUserEntityById(id);
+    public UserMeResponseDTO updateMe(
+            String email, String firstName, String lastName, String bio, String color,
+            String oldPassword, String newPassword,
+            MultipartFile avatar, MultipartFile banner
+    ){
         User user = currentUserService.getCurrentUser();
 
-        if (user.getEmail() != null && !user.getEmail().equals(existing.getEmail())
-                && repository.existsByEmail(user.getEmail())) {
+        if(email != null && !email.isBlank() && !email.equals(user.getEmail())
+            && repository.existsByEmail(email)){
             throw new ResourceAlreadyExistsException("Email already in use");
         }
+        if(email != null && !email.isBlank()) user.setEmail(email);
+        if(firstName != null && !firstName.isBlank()) user.setFirstName(firstName);
+        if(lastName != null && !lastName.isBlank()) user.setLastName(lastName);
+        if(bio != null && !bio.isBlank()) user.setBio(bio);
+        if(color != null && !color.isBlank()) user.setColor(color);
 
-        if (user.getUsername() != null && !user.getUsername().equals(existing.getUsername())
-                && repository.existsByUsername(user.getUsername())) {
-            throw new ResourceAlreadyExistsException("Username already in use");
+        if(avatar != null && !avatar.isEmpty()) {
+            user.setAvatarImage(storageService.save(avatar, "users/avatars"));
         }
-
-        existing.setFirstName(user.getFirstName());
-        existing.setLastName(user.getLastName());
-        existing.setEmail(user.getEmail());
-        existing.setUsername(user.getUsername());
-        existing.setPhone(user.getPhone());
-        existing.setBio(user.getBio());
-        existing.setWebsite(user.getWebsite());
-        existing.setAvatarImage(user.getAvatarImage());
-        existing.setBannerImage(user.getBannerImage());
-        existing.setColor(user.getColor());
-        existing.setExplanation(user.getExplanation());
-        existing.setRole(user.getRole());
-
-        if (user.getPassword() != null && !user.getPassword().isBlank()) {
-            existing.setPassword(passwordEncoder.encode(user.getPassword()));
+        if(banner != null && !banner.isEmpty()) {
+            user.setBannerImage(storageService.save(banner, "users/banners"));
         }
-        User updatedUser = repository.save(existing);
-        return mapper.toDTO(updatedUser);
+        if(newPassword !=null && !newPassword.isBlank()){
+            if(oldPassword == null || oldPassword.isBlank()){
+                throw new BadRequestException("Old password is required");
+            }
+            if(!passwordEncoder.matches(oldPassword, user.getPassword())){
+                throw new BadRequestException("Old password is incorrect");
+            }
+            user.setPassword(passwordEncoder.encode(newPassword));
+        }
+        User saved = repository.save(user);
+        return userMapper.toMeResponse(saved);
+    }
+
+
+    public UserResponseDTO getUserByEmail(String email) {
+        User userNotFound = repository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        return userMapper.toResponse(userNotFound);
     }
 
     public void deleteUser(Long id) {
-        repository.deleteById(id);
+        User target = getUserEntityById(id);
+        User currentUser = currentUserService.getCurrentUser();
+                if(!target.getId().equals(currentUser.getId()) && currentUser.getRole() != Role.ROLE_ADMIN) {
+                    throw new AccessDeniedException("You are not allowed to delete this user");
+                }
+
+        repository.deleteById(target.getId());
     }
+
+    User getUserEntityById(Long id) {
+       return repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+    }
+
+    public UserResponseDTO updateUser(Long id, UserMeUpdateRequestDTO dto) {
+        User existing = getUserEntityById(id);
+        User current = currentUserService.getCurrentUser();
+
+        if (!existing.getId().equals(current.getId()) && current.getRole() != Role.ROLE_ADMIN) {
+            throw new AccessDeniedException("You are not allowed to update this user");
+        }
+
+        String normalizedEmail = normalizeEmail(dto.getEmail());
+
+        if (normalizedEmail != null && !normalizedEmail.equalsIgnoreCase(existing.getEmail())
+                && repository.existsByEmail(normalizedEmail)) {
+            throw new ResourceAlreadyExistsException("Email already in use");
+        }
+
+        if (dto.getEmail() != null && !dto.getEmail().equals(existing.getEmail())
+                && repository.existsByUsername(dto.getEmail())) {
+            throw new ResourceAlreadyExistsException("Username already in use");
+        }
+
+        if (normalizedEmail != null) existing.setEmail(normalizedEmail);
+        setIfPresent(dto.getFirstName(), existing::setFirstName);
+        setIfPresent(dto.getLastName(), existing::setLastName);
+        setIfPresent(dto.getBio(), existing::setBio);
+        setIfPresent(dto.getColor(), existing::setColor);
+
+        if (dto.getAvatarImage() != null) existing.setAvatarImage(dto.getAvatarImage());
+        if (dto.getBannerImage() != null) existing.setBannerImage(dto.getBannerImage());
+
+        if (dto.getNewPassword() != null && !dto.getNewPassword().isBlank()) {
+            if (dto.getOldPassword() == null || dto.getOldPassword().isBlank()) {
+                throw new BadRequestException("Old password is required");
+            }
+            if (!passwordEncoder.matches(dto.getOldPassword(), existing.getPassword())) {
+                throw new BadRequestException("Old password is incorrect");
+            }
+            existing.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+        }
+
+        User saved = repository.save(existing);
+        return userMapper.toResponse(saved);
+    }
+
+    private void setIfPresent(String value, java.util.function.Consumer<String> setter) {
+        if (value != null && !value.isBlank()) {
+            setter.accept(value.trim());
+        }
+    }
+
+    private String normalizeEmail(String email) {
+        if (email == null) return null;
+        String e = email.trim();
+        return e.isBlank() ? null : e.toLowerCase();
+    }
+
 }

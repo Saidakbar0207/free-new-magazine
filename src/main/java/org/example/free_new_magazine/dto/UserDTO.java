@@ -31,5 +31,5 @@ public class UserDTO {
     private String password;
 
     @NotNull(message = "Role is required")
-    private Role role;
+    private String role;
 }
