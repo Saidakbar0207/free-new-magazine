@@ -9,10 +9,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class FollowDTO {
-
-    @NotNull(message = "Follower id is required")
-    private Long followerId;
-
     @NotNull(message = "Following id is required")
     private Long followingId;
 }

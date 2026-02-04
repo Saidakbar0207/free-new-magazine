@@ -2,64 +2,64 @@ package org.example.free_new_magazine.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import lombok.Builder;
+
+import org.example.free_new_magazine.entity.User;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
-import java.security.Key;
 import java.util.Date;
-import java.util.UUID;
 
 @Component
 public class JwtUtils {
+
     @Value("${jwt.secret-key}")
-    private  String secretKeyWord;
+    private String secretKey;
 
-    public String generateToken(String username) {
-        Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + 3600 * 1000);
-        return Jwts.builder()
-                .setSubject(username)
-                .setIssuedAt(now)
-                .setExpiration(expiryDate)
-                .signWith(getSigningKey(),SignatureAlgorithm.HS256)
-                .compact();
-    }
-
-    private Key getSigningKey() {
-        byte[] keyBytes = secretKeyWord.getBytes(StandardCharsets.UTF_8);
+    private SecretKey getKey() {
+        byte[] keyBytes = secretKey.getBytes(StandardCharsets.UTF_8);
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
+    public String generateToken(User user) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + 3600 * 1000);
 
-    public boolean isValidToken(String token) {
+        return Jwts.builder()
+                .setSubject(user.getUsername())
+                .claim("role" , user.getRole().name())
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
+                .signWith(getKey())
+                .compact();
+    }
+
+    public String getUsernameFromToken(String token) {
         try {
-            Claims body = Jwts.parserBuilder()
-                    .setSigningKey(getSigningKey())
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(getKey())
                     .build()
                     .parseClaimsJws(token)
                     .getBody();
-            Date expiration = body.getExpiration();
-            return expiration.after(new Date());
+            return claims.getSubject();
         } catch (Exception e) {
-            System.err.println("Invalid token" + e.getMessage());
+            System.err.println("Invalid JWT token: " + e.getMessage());
+            return null;
+        }
+    }
+
+    public boolean validateToken(String token) {
+        try {
+            Jwts.parserBuilder()
+                    .setSigningKey(getKey())
+                    .build()
+                    .parseClaimsJws(token);
+            return true;
+        } catch (Exception e) {
+            System.err.println("Invalid JWT token: " + e.getMessage());
             return false;
         }
     }
-
-    public String getSubject(String token) {
-        try {
-            return Jwts.parserBuilder()
-                    .setSigningKey(getSigningKey())
-                    .build()
-                    .parseClaimsJws(token)
-                    .getBody().getSubject();
-        } catch (Exception e) {
-            throw new RuntimeException("User not Found");
-        }
-    }
-
 }

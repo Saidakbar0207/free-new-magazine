@@ -3,8 +3,11 @@ package org.example.free_new_magazine.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.proxy.HibernateProxy;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.http.MediaType;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 
 
@@ -20,13 +23,18 @@ public class Post {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false,length = 255)
     private String title;
 
     @Column(columnDefinition = "TEXT")
     private String content;
 
-    private String bannerImage;
+    @Enumerated(EnumType.STRING)
+    @Column(name="cover_type", length=10)
+    private CoverType coverType = CoverType.NONE;
+
+    @Column(name="cover_url", columnDefinition="TEXT")
+    private String coverUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
@@ -34,9 +42,21 @@ public class Post {
     private Category category;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id",nullable = false)
     @ToString.Exclude
     private User author;
+
+    @OneToMany(mappedBy = "post")
+    @ToString.Exclude
+    List<PostImage> images;
+
+    @OneToMany(mappedBy = "post")
+    @ToString.Exclude
+    List<PostVideo> videos;
+
+    @OneToMany(mappedBy = "post")
+    @ToString.Exclude
+    List<PostTag> postTags;
 
 
     private Long views = 0L;
@@ -78,4 +98,6 @@ public class Post {
     public final int hashCode() {
         return this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass().hashCode() : getClass().hashCode();
     }
+
+
 }

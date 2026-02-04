@@ -1,43 +1,60 @@
     package org.example.free_new_magazine.service;
 
     import lombok.RequiredArgsConstructor;
-    import org.example.free_new_magazine.dto.PostDTO;
-    import org.example.free_new_magazine.entity.Category;
-    import org.example.free_new_magazine.entity.Post;
-    import org.example.free_new_magazine.entity.Role;
-    import org.example.free_new_magazine.entity.User;
+    import org.example.free_new_magazine.dto.PostCreateDTO;
+    import org.example.free_new_magazine.dto.PostResponseDTO;
+    import org.example.free_new_magazine.dto.TelegramPostDTO;
+    import org.example.free_new_magazine.entity.*;
     import org.example.free_new_magazine.exception.ResourceNotFoundException;
+    import org.example.free_new_magazine.repository.PostImageRepository;
+    import org.example.free_new_magazine.repository.PostVideoRepository;
+    import org.example.free_new_magazine.telegram.config.TelegramBotConfig;
+    import org.springframework.beans.factory.annotation.Value;
+    import org.springframework.context.ApplicationEventPublisher;
+    import org.springframework.data.domain.PageRequest;
+    import org.springframework.data.domain.Pageable;
+    import org.springframework.data.domain.Sort;
     import org.springframework.security.access.AccessDeniedException;
     import org.example.free_new_magazine.mapper.PostMapper;
     import org.example.free_new_magazine.repository.CategoryRepository;
     import org.example.free_new_magazine.repository.PostRepository;
     import org.springframework.stereotype.Service;
+    import org.springframework.web.multipart.MultipartFile;
 
     import java.util.List;
-    import java.util.stream.Collectors;
+
 
     @Service
     @RequiredArgsConstructor
     public class PostService {
 
+
         private final PostRepository postRepository;
         private final CategoryRepository categoryRepository;
+        private final  AuditLogService auditLogService;
+        private final PostImageRepository postImageRepository;
+        private final PostVideoRepository postVideoRepository;
         private final PostMapper postMapper;
         private final CurrentUserService currentUserService;
-        private final  AuditLogService auditLogService;
+        private final StorageService storageService;
+
+        @Value("${telegram.bot.url}")
+        private String botUrl;
 
 
-        public List<PostDTO> getAllPosts() {
-            return postRepository.findAll()
+
+
+        public List<PostResponseDTO> getAllPosts(Pageable pageable) {
+            return postRepository
+                    .findAll(pageable)
                     .stream()
-                    .map(postMapper::toDTO)
-                    .collect(Collectors.toList());
+                    .map(postMapper::toResponseDTO)
+                    .toList();
         }
 
-        public PostDTO getPostById(Long id) {
-            Post post = postRepository.findById(id)
-                    .orElseThrow(() -> new ResourceNotFoundException("Post not found with id: " + id));
-            return postMapper.toDTO(post);
+        public PostResponseDTO getPostById(Long id) {
+          Post post = getPostEntityById(id);
+           return postMapper.toResponseDTO(post);
         }
 
         public Post getPostEntityById(Long id) {
@@ -45,26 +62,57 @@
                     .orElseThrow(() -> new ResourceNotFoundException("Post not found with id: " + id));
         }
 
-
-
-        public PostDTO createPost(PostDTO postDTO) {
+        public PostResponseDTO createPost(PostCreateDTO postCreateDTO, MultipartFile file) {
             User user = currentUserService.getCurrentUser();
-            Post post = postMapper.toEntity(postDTO);
+            Post post = postMapper.toEntity(postCreateDTO);
             post.setAuthor(user);
-
-            if(postDTO.getCategoryId() != null) {
-                Category category = categoryRepository.findById(postDTO.getCategoryId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + postDTO.getCategoryId()));
+            if(postCreateDTO.getCategoryId() != null) {
+                Category category = categoryRepository.findById(postCreateDTO.getCategoryId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + postCreateDTO.getCategoryId()));
                 post.setCategory(category);
             }
+            if(post.getViews() == null) post.setViews(0L);
+            if(post.getFeatured() == null) post.setFeatured(false);
+            if(post.getStatus() == null) post.setStatus(PostStatus.DRAFT);
+            if(post.getIsDeleted() == null) post.setIsDeleted(false);
 
-            Post savedPost = postRepository.save(post);
-            auditLogService.log("CREATE_POST","/posts");
-            return postMapper.toDTO(savedPost);
+            Post saved = postRepository.save(post);
+
+            auditLogService.log("CREATE_POST","/api/posts");
+
+
+            if (file != null && !file.isEmpty()) {
+                String ct = file.getContentType();
+
+                if (ct != null && ct.startsWith("image/")) {
+                    String url = storageService.save(file, "posts/images/" + saved.getId());
+                    postImageRepository.save(PostImage.builder().imageUrl(url).post(saved).build());
+
+                    if (saved.getCoverUrl() == null) {
+                        saved.setCoverUrl(url);
+                        saved.setCoverType(CoverType.IMAGE);
+                        saved = postRepository.save(saved);
+                    }
+
+
+                } else if (ct != null && ct.startsWith("video/")) {
+                    String url = storageService.save(file, "posts/videos/" + saved.getId());
+                    postVideoRepository.save(PostVideo.builder().videoUrl(url).post(saved).build());
+
+                    if (saved.getCoverUrl() == null) {
+                        saved.setCoverUrl(url);
+                        saved.setCoverType(CoverType.VIDEO);
+                        saved = postRepository.save(saved);
+                    }
+
+                } else {
+                    throw new IllegalArgumentException("File type not supported: " + ct);
+                }
+            }
+            return postMapper.toResponseDTO(saved);
         }
 
-
-        public PostDTO updatePost(Long id, PostDTO postDTO){
+        public PostResponseDTO updatePost(Long id, PostCreateDTO postCreateDTO){
             User user = currentUserService.getCurrentUser();
 
             Post post = postRepository.findById(id)
@@ -74,19 +122,27 @@
                 throw new AccessDeniedException("You do not have permission to update this post");
             }
 
-            post.setTitle(postDTO.getTitle());
-            post.setContent(postDTO.getContent());
+            post.setTitle(postCreateDTO.getTitle());
+            post.setContent(postCreateDTO.getContent());
 
-            if (postDTO.getCategoryId() != null) {
-                Category category = categoryRepository.findById(postDTO.getCategoryId())
-                                .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + postDTO.getCategoryId()));
+            if (postCreateDTO.getCategoryId() != null) {
+                Category category = categoryRepository.findById(postCreateDTO.getCategoryId())
+                                .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + postCreateDTO.getCategoryId()));
                 post.setCategory(category);
             }
 
             Post updatedPost = postRepository.save(post);
-            auditLogService.log("UPDATE_POST","/posts" + id);
-            return postMapper.toDTO(updatedPost);
+            auditLogService.log("UPDATE_POST","/posts/" + id);
+            return postMapper.toResponseDTO(updatedPost);
         }
+
+        public List<PostResponseDTO> getMyPosts() {
+            User user = currentUserService.getCurrentUser();
+            return postRepository.findByAuthor_Id(user.getId())
+                    .stream().map(postMapper::toResponseDTO)
+                    .toList();
+        }
+
 
 
         public void deletePost(Long id) {
@@ -100,6 +156,40 @@
                 throw new AccessDeniedException("You do not have permission to delete this post");
             }
             postRepository.delete(post);
-            auditLogService.log("DELETE_POST","/posts" + id);
+            post.setIsDeleted(true);
+            auditLogService.log("DELETE_POST","/posts/" + id);
         }
+
+        public List<TelegramPostDTO> getLatestForTelegram(int limit) {
+
+            return postRepository.findByStatusAndIsDeletedFalse(
+                            PostStatus.PUBLISHED,
+                            PageRequest.of(0,limit,Sort.by("createAt").descending()))
+                    .getContent()
+                    .stream()
+                    .map(post ->{
+                        String content = post.getContent() == null ? "" : post.getContent();
+                        String preview = content.length() > 300 ? content.substring(0, 300) + "..." : content;
+                        return  new TelegramPostDTO(
+                            post.getId(),
+                            post.getTitle(),
+                            preview,
+                           String.format(botUrl,post.getId())
+                        );
+                    })
+                    .toList();
+        }
+
+        public PostResponseDTO publishPost(Long id) {
+            User user = currentUserService.getCurrentUser();
+            Post post = getPostEntityById(id);
+            if(!post.getAuthor().getId().equals(user.getId()) && user.getRole() != Role.ROLE_ADMIN) {
+                throw new AccessDeniedException("You do not have permission to publish this post");
+            }
+            post.setStatus(PostStatus.PUBLISHED);
+            Post saved = postRepository.save(post);
+            auditLogService.log("PUBLISH_POST","/posts/" + id);
+            return postMapper.toResponseDTO(saved);
+        }
+
     }

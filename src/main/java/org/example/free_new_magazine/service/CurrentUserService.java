@@ -13,11 +13,11 @@ public class CurrentUserService {
     private final UserRepository userRepository;
 
     public User getCurrentUser(){
-        String email  = SecurityContextHolder
+        String username  = SecurityContextHolder
                 .getContext()
                 .getAuthentication()
                 .getName();
-        return userRepository.findByEmail(email)
+        return userRepository.findByUsername(username)
                 .orElseThrow(()-> new RuntimeException("User not found"));
 
     }

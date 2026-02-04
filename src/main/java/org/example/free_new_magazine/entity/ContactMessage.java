@@ -30,6 +30,10 @@ public class ContactMessage {
     @Column(columnDefinition = "TEXT")
     private String message;
 
+    @Column(columnDefinition = "TEXT")
+    private String imageUrl;
+
+
     private LocalDateTime createdAt;
 
     @PrePersist

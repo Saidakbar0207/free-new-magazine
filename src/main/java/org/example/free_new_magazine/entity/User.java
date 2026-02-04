@@ -8,7 +8,11 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity
-@Table(name = "users")
+@Table(name = "users",
+uniqueConstraints = {
+        @UniqueConstraint(columnNames = ("email")),
+        @UniqueConstraint(columnNames = "username")
+})
 @Getter
 @Setter
 @ToString
@@ -18,35 +22,37 @@ import java.util.Objects;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String firstName;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String lastName;
 
     @Column(unique = true, nullable = false)
     private String email;
 
+    @Column(nullable = false)
     private String password;
 
-    @Column(unique = true)
+    @Column(unique = true, nullable = false)
     private String username;
 
-    private String phone;
 
+
+    @Column(columnDefinition = "TEXT")
     private String bio;
 
-    private String website;
 
+    @Column(columnDefinition = "TEXT")
     private String avatarImage;
 
+    @Column(columnDefinition = "TEXT")
     private String bannerImage;
 
     private String color;
 
-    private String explanation;
 
     @Enumerated(EnumType.STRING)
     private Role role;
@@ -89,4 +95,6 @@ public class User {
     public final int hashCode() {
         return this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass().hashCode() : getClass().hashCode();
     }
+
+
 }
