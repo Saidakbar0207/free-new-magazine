@@ -5,12 +5,12 @@
     import org.example.free_new_magazine.dto.PostResponseDTO;
     import org.example.free_new_magazine.dto.TelegramPostDTO;
     import org.example.free_new_magazine.entity.*;
-    import org.example.free_new_magazine.exception.ResourceNotFoundException;
+    import org.example.free_new_magazine.exception.ForbiddenException;
+    import org.example.free_new_magazine.exception.NotFoundException;
     import org.example.free_new_magazine.repository.PostImageRepository;
     import org.example.free_new_magazine.repository.PostVideoRepository;
-    import org.example.free_new_magazine.telegram.config.TelegramBotConfig;
     import org.springframework.beans.factory.annotation.Value;
-    import org.springframework.context.ApplicationEventPublisher;
+    import org.springframework.data.domain.Page;
     import org.springframework.data.domain.PageRequest;
     import org.springframework.data.domain.Pageable;
     import org.springframework.data.domain.Sort;
@@ -43,6 +43,12 @@
 
 
 
+        private void checkPostOwnerOrAdmin(Post post,User me){
+            boolean owner = post.getAuthor().getId().equals(me.getId());
+            boolean admin = me.getRole() == Role.ROLE_ADMIN;
+            if(!owner && !admin) throw new ForbiddenException("You do not have permission to access this post");
+        }
+
 
         public List<PostResponseDTO> getAllPosts(Pageable pageable) {
             return postRepository
@@ -59,7 +65,7 @@
 
         public Post getPostEntityById(Long id) {
             return  postRepository.findById(id)
-                    .orElseThrow(() -> new ResourceNotFoundException("Post not found with id: " + id));
+                    .orElseThrow(() -> new NotFoundException("Post not found with id: " + id));
         }
 
         public PostResponseDTO createPost(PostCreateDTO postCreateDTO, MultipartFile file) {
@@ -68,7 +74,7 @@
             post.setAuthor(user);
             if(postCreateDTO.getCategoryId() != null) {
                 Category category = categoryRepository.findById(postCreateDTO.getCategoryId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + postCreateDTO.getCategoryId()));
+                        .orElseThrow(() -> new NotFoundException("Category not found with id: " + postCreateDTO.getCategoryId()));
                 post.setCategory(category);
             }
             if(post.getViews() == null) post.setViews(0L);
@@ -116,7 +122,7 @@
             User user = currentUserService.getCurrentUser();
 
             Post post = postRepository.findById(id)
-                    .orElseThrow(() -> new ResourceNotFoundException("Post not found with id: " + id));
+                    .orElseThrow(() -> new NotFoundException("Post not found with id: " + id));
 
             if(!post.getAuthor().getId().equals(user.getId()) && user.getRole() != Role.ROLE_ADMIN) {
                 throw new AccessDeniedException("You do not have permission to update this post");
@@ -127,7 +133,7 @@
 
             if (postCreateDTO.getCategoryId() != null) {
                 Category category = categoryRepository.findById(postCreateDTO.getCategoryId())
-                                .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + postCreateDTO.getCategoryId()));
+                                .orElseThrow(() -> new NotFoundException("Category not found with id: " + postCreateDTO.getCategoryId()));
                 post.setCategory(category);
             }
 
@@ -143,6 +149,17 @@
                     .toList();
         }
 
+        public Page<PostResponseDTO> getPublicPosts(Pageable pageable) {
+            return postRepository.findByStatusAndIsDeletedFalse(PostStatus.PUBLISHED, pageable)
+                    .map(postMapper::toResponseDTO);
+        }
+
+        public PostResponseDTO getPublicPostById(Long id){
+            Post post = postRepository.findByIdAndStatusAndIsDeletedFalse(id, PostStatus.PUBLISHED)
+                    .orElseThrow(() -> new NotFoundException("Post not found with id: " + id));
+            return postMapper.toResponseDTO(post);
+        }
+
 
 
         public void deletePost(Long id) {
@@ -150,14 +167,14 @@
             User user = currentUserService.getCurrentUser();
 
             Post post = postRepository.findById(id)
-                    .orElseThrow(() -> new ResourceNotFoundException("Post not found with id: " + id));
+                    .orElseThrow(() -> new NotFoundException("Post not found with id: " + id));
 
             if(!post.getAuthor().getId().equals(user.getId()) && user.getRole() != Role.ROLE_ADMIN) {
                 throw new AccessDeniedException("You do not have permission to delete this post");
             }
-            postRepository.delete(post);
             post.setIsDeleted(true);
             auditLogService.log("DELETE_POST","/posts/" + id);
+            postRepository.save(post);
         }
 
         public List<TelegramPostDTO> getLatestForTelegram(int limit) {
@@ -184,7 +201,7 @@
             User user = currentUserService.getCurrentUser();
             Post post = getPostEntityById(id);
             if(!post.getAuthor().getId().equals(user.getId()) && user.getRole() != Role.ROLE_ADMIN) {
-                throw new AccessDeniedException("You do not have permission to publish this post");
+                throw new ForbiddenException("You do not have permission to publish this post");
             }
             post.setStatus(PostStatus.PUBLISHED);
             Post saved = postRepository.save(post);

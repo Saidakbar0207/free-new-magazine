@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface PostRepository extends JpaRepository<Post,Long> {
@@ -20,5 +21,6 @@ public interface PostRepository extends JpaRepository<Post,Long> {
 
     List<Post> findByAuthor_Id(Long id);
 
-    Page<Post> findByStatusAndIsDeletedFalse(PostStatus postStatus, PageRequest createAt);
+    Page<Post> findByStatusAndIsDeletedFalse(PostStatus postStatus, Pageable pageable);
+    Optional<Post>  findByIdAndStatusAndIsDeletedFalse(Long id, PostStatus postStatus);
 }

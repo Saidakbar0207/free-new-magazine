@@ -6,6 +6,7 @@ import org.example.free_new_magazine.dto.SavedPostDTO;
 import org.example.free_new_magazine.entity.Post;
 import org.example.free_new_magazine.entity.SavedPost;
 import org.example.free_new_magazine.entity.User;
+import org.example.free_new_magazine.exception.NotFoundException;
 import org.example.free_new_magazine.mapper.PostMapper;
 import org.example.free_new_magazine.mapper.SavedPostMapper;
 import org.example.free_new_magazine.repository.PostRepository;
@@ -45,7 +46,7 @@ public class SavedPostService {
         if(savedPostRepository.existsByUser_IdAndPost_Id(user.getId(), postId)) return;
 
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new RuntimeException("Post not found" + postId) );
+                .orElseThrow(() -> new NotFoundException("Post not found" + postId) );
         SavedPost savedPost = SavedPost.builder()
                 .user(user)
                 .post(post)

@@ -1,6 +1,7 @@
 package org.example.free_new_magazine.service;
 
 import org.example.free_new_magazine.entity.PostImage;
+import org.example.free_new_magazine.exception.NotFoundException;
 import org.example.free_new_magazine.repository.PostImageRepository;
 import org.springframework.stereotype.Service;
 
@@ -27,7 +28,7 @@ public class PostImageService {
                     postImage.setPost(updatedImage.getPost());
                     return postImageRepository.save(postImage);
                 })
-                .orElseThrow(() -> new RuntimeException("PostImage not found with id " + id));
+                .orElseThrow(() -> new NotFoundException("PostImage not found with id " + id));
     }
 
     public List<PostImage> getImagesByPostId(Long postId) {

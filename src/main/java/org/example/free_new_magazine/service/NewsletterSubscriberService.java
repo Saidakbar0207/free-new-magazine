@@ -1,6 +1,7 @@
 package org.example.free_new_magazine.service;
 
 import org.example.free_new_magazine.entity.NewsletterSubscriber;
+import org.example.free_new_magazine.exception.ConflictException;
 import org.example.free_new_magazine.repository.NewsletterSubscriberRepository;
 import org.springframework.stereotype.Service;
 
@@ -33,7 +34,7 @@ public class NewsletterSubscriberService {
 
     public NewsletterSubscriber subscribe(NewsletterSubscriber subscriber) {
         if (subscriberRepository.existsByEmail(subscriber.getEmail())) {
-            throw new RuntimeException("This email is already subscribed.");
+            throw new ConflictException("This email is already subscribed.");
         }
         return subscriberRepository.save(subscriber);
     }

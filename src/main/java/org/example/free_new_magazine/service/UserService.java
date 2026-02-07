@@ -1,16 +1,13 @@
 package org.example.free_new_magazine.service;
 
-import jakarta.validation.Valid;
 import jakarta.ws.rs.BadRequestException;
 import lombok.RequiredArgsConstructor;
-import org.example.free_new_magazine.dto.UserDTO;
 import org.example.free_new_magazine.dto.UserMeResponseDTO;
 import org.example.free_new_magazine.dto.UserMeUpdateRequestDTO;
 import org.example.free_new_magazine.dto.UserResponseDTO;
 import org.example.free_new_magazine.entity.Role;
 import org.example.free_new_magazine.entity.User;
-import org.example.free_new_magazine.exception.ResourceAlreadyExistsException;
-import org.example.free_new_magazine.exception.ResourceNotFoundException;
+import org.example.free_new_magazine.exception.NotFoundException;
 import org.example.free_new_magazine.mapper.UserMapper;
 import org.example.free_new_magazine.repository.UserRepository;
 import org.springframework.security.access.AccessDeniedException;
@@ -66,7 +63,7 @@ public class UserService {
 
         if(email != null && !email.isBlank() && !email.equals(user.getEmail())
             && repository.existsByEmail(email)){
-            throw new ResourceAlreadyExistsException("Email already in use");
+            throw new NotFoundException("Email already in use");
         }
         if(email != null && !email.isBlank()) user.setEmail(email);
         if(firstName != null && !firstName.isBlank()) user.setFirstName(firstName);
@@ -96,7 +93,7 @@ public class UserService {
 
     public UserResponseDTO getUserByEmail(String email) {
         User userNotFound = repository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> new NotFoundException("User not found"));
         return userMapper.toResponse(userNotFound);
     }
 
@@ -112,7 +109,7 @@ public class UserService {
 
     User getUserEntityById(Long id) {
        return repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> new NotFoundException("User not found"));
     }
 
     public UserResponseDTO updateUser(Long id, UserMeUpdateRequestDTO dto) {
@@ -127,12 +124,12 @@ public class UserService {
 
         if (normalizedEmail != null && !normalizedEmail.equalsIgnoreCase(existing.getEmail())
                 && repository.existsByEmail(normalizedEmail)) {
-            throw new ResourceAlreadyExistsException("Email already in use");
+            throw new NotFoundException("Email already in use");
         }
 
         if (dto.getEmail() != null && !dto.getEmail().equals(existing.getEmail())
                 && repository.existsByUsername(dto.getEmail())) {
-            throw new ResourceAlreadyExistsException("Username already in use");
+            throw new NotFoundException("Username already in use");
         }
 
         if (normalizedEmail != null) existing.setEmail(normalizedEmail);

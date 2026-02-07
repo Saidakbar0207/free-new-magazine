@@ -5,7 +5,8 @@ import org.example.free_new_magazine.dto.CategoryDTO;
 import org.example.free_new_magazine.entity.Category;
 import org.example.free_new_magazine.entity.Role;
 import org.example.free_new_magazine.entity.User;
-import org.example.free_new_magazine.exception.ResourceNotFoundException;
+import org.example.free_new_magazine.exception.ForbiddenException;
+import org.example.free_new_magazine.exception.NotFoundException;
 import org.example.free_new_magazine.mapper.CategoryMapper;
 import org.example.free_new_magazine.repository.CategoryRepository;
 import org.springframework.stereotype.Service;
@@ -25,7 +26,7 @@ public class CategoryService {
     private void requiredAdmin(){
         User user = currentUserService.getCurrentUser();
         if(user.getRole() != Role.ROLE_ADMIN) {
-            throw  new AccessDeniedException("Only ADMIN can manage category");
+            throw  new ForbiddenException("Only ADMIN can manage category");
         }
     }
 
@@ -39,7 +40,7 @@ public class CategoryService {
 
     public CategoryDTO getCategoryById(Long id) {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + id));
+                .orElseThrow(() -> new NotFoundException("Category not found with id: " + id));
         return categoryMapper.toDTO(category);
     }
 
@@ -54,7 +55,7 @@ public class CategoryService {
     public CategoryDTO updateCategory(Long id, CategoryDTO categoryDTO) {
         requiredAdmin();
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + id));
+                .orElseThrow(() -> new NotFoundException("Category not found with id: " + id));
         category.setName(categoryDTO.getName());
         category.setDescription(categoryDTO.getDescription());
 
@@ -66,7 +67,7 @@ public class CategoryService {
     public void deleteCategory(Long id) {
        requiredAdmin();
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + id));
+                .orElseThrow(() -> new NotFoundException("Category not found with id: " + id));
         categoryRepository.delete(category);
         auditLogService.log("DELETE_CATEGORY","/categories/" + id);
     }

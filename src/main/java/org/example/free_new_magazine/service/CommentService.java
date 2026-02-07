@@ -6,7 +6,8 @@ import org.example.free_new_magazine.entity.Comment;
 import org.example.free_new_magazine.entity.Post;
 import org.example.free_new_magazine.entity.Role;
 import org.example.free_new_magazine.entity.User;
-import org.example.free_new_magazine.exception.ResourceNotFoundException;
+import org.example.free_new_magazine.exception.ForbiddenException;
+import org.example.free_new_magazine.exception.NotFoundException;
 import org.springframework.security.access.AccessDeniedException;
 import org.example.free_new_magazine.mapper.CommentMapper;
 import org.example.free_new_magazine.repository.CommentRepository;
@@ -40,7 +41,7 @@ public class CommentService {
 
     public CommentDTO getCommentById(Long id) {
         Comment comment = commentRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Comment not found with id " + id));
+                .orElseThrow(() -> new NotFoundException("Comment not found with id " + id));
         return commentMapper.toDTO(comment);
     }
 
@@ -61,7 +62,7 @@ public class CommentService {
     public CommentDTO updateComment(Long id, CommentDTO commentDTO){
         User user = currentUserService.getCurrentUser();
         Comment  comment = commentRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Comment not found with id " + id));
+                .orElseThrow(() -> new NotFoundException("Comment not found with id " + id));
 
         if(!comment.getUser().getId().equals(user.getId()) && user.getRole() != Role.ROLE_ADMIN) {
             throw new AccessDeniedException("You are not allowed to update this comment");
@@ -78,10 +79,10 @@ public class CommentService {
     public void deleteComment(Long id) {
         User user = currentUserService.getCurrentUser();
         Comment comment = commentRepository.findById(id)
-                        .orElseThrow(() -> new ResourceNotFoundException("Comment not found with id " + id));
+                        .orElseThrow(() -> new NotFoundException("Comment not found with id " + id));
 
         if(!comment.getUser().getId().equals(user.getId()) && user.getRole() != Role.ROLE_ADMIN) {
-            throw new AccessDeniedException("You are not allowed to delete this comment ");
+            throw new ForbiddenException("You are not allowed to delete this comment ");
         }
         commentRepository.deleteById(id);
         auditLogService.log("DELETE_COMMENT", "/comments");

@@ -2,6 +2,7 @@ package org.example.free_new_magazine.service;
 
 import lombok.RequiredArgsConstructor;
 import org.example.free_new_magazine.entity.User;
+import org.example.free_new_magazine.exception.NotFoundException;
 import org.example.free_new_magazine.repository.UserRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -18,7 +19,7 @@ public class CurrentUserService {
                 .getAuthentication()
                 .getName();
         return userRepository.findByUsername(username)
-                .orElseThrow(()-> new RuntimeException("User not found"));
+                .orElseThrow(()-> new NotFoundException("User not found"));
 
     }
 }

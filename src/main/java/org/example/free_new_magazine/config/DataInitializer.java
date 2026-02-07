@@ -5,16 +5,22 @@ import org.example.free_new_magazine.entity.Role;
 import org.example.free_new_magazine.entity.User;
 import org.example.free_new_magazine.repository.UserRepository;
 import org.example.free_new_magazine.service.AuditLogService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
+@Profile("dev")
 @RequiredArgsConstructor
 public class DataInitializer implements CommandLineRunner {
     private final UserRepository userRepository;
     private final AuditLogService auditLogService;
     private final PasswordEncoder passwordEncoder;
+
+    @Value("${admin.password}")
+    private String adminPassword;
 
 
     @Override
@@ -27,7 +33,7 @@ public class DataInitializer implements CommandLineRunner {
             admin.setLastName("Nematullayev");
             admin.setUsername("Saidakbar");
             admin.setEmail(adminEmail);
-            admin.setPassword(passwordEncoder.encode("saidakbar"));
+            admin.setPassword(passwordEncoder.encode(adminPassword));
             admin.setRole(Role.ROLE_ADMIN);
             userRepository.save(admin);
             System.out.println(" Admin user yaratildi: " + adminEmail);
