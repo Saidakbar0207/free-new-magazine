@@ -5,6 +5,7 @@
     import org.example.free_new_magazine.dto.PostCreateDTO;
     import org.example.free_new_magazine.dto.PostResponseDTO;
     import org.example.free_new_magazine.service.PostService;
+    import org.springframework.data.domain.Page;
     import org.springframework.data.domain.Pageable;
     import org.springframework.http.HttpStatus;
     import org.springframework.http.MediaType;
@@ -45,6 +46,16 @@
             return ResponseEntity.ok(postService.getMyPosts());
         }
 
+        @GetMapping("/public")
+        public Page<PostResponseDTO> publicList(Pageable pageable){
+            return postService.getPublicPosts(pageable);
+        }
+
+        @GetMapping("/public{id}")
+        public PostResponseDTO publicById(@PathVariable Long id){
+            return postService.getPostById(id);
+        }
+
 
 
         @PutMapping("/{id}")
@@ -52,6 +63,8 @@
                                                           @Valid @RequestBody PostCreateDTO postCreateDTO) {
             return ResponseEntity.ok(postService.updatePost(id, postCreateDTO));
         }
+
+
 
         @DeleteMapping("/{id}")
         public ResponseEntity<Void> deletePost(@PathVariable Long id) {

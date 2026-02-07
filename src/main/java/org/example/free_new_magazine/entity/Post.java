@@ -67,7 +67,7 @@ public class Post {
 
     private PostStatus status;
 
-    private Boolean isDeleted =false;
+    private Boolean IsDeleted = false;
 
     private LocalDateTime createAt;
     private LocalDateTime updateAt;

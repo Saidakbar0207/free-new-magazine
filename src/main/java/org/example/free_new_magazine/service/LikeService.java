@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.example.free_new_magazine.entity.Like;
 import org.example.free_new_magazine.entity.Post;
 import org.example.free_new_magazine.entity.User;
-import org.example.free_new_magazine.exception.ResourceAlreadyExistsException;
-import org.example.free_new_magazine.exception.ResourceNotFoundException;
+import org.example.free_new_magazine.exception.ConflictException;
+import org.example.free_new_magazine.exception.NotFoundException;
 import org.example.free_new_magazine.repository.LikeRepository;
 import org.example.free_new_magazine.repository.PostRepository;
 import org.example.free_new_magazine.repository.UserRepository;
@@ -20,21 +20,24 @@ public class LikeService {
     private final LikeRepository likeRepository;
     private final UserRepository userRepository;
     private final PostRepository postRepository;
+    private final CurrentUserService currentUserService;
 
 
-    public Like likePost(Long userId, Long postId) {
+    public Like likePost(Long postId) {
 
+
+        Long userId = currentUserService.getCurrentUser().getId();
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> new NotFoundException("User not found"));
 
 
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new ResourceNotFoundException("Post not found"));
+                .orElseThrow(() -> new NotFoundException("Post not found"));
 
 
         likeRepository.findByUserIdAndPostId(userId, postId).ifPresent(l -> {
-            throw new ResourceAlreadyExistsException("You already liked this post");
+            throw new ConflictException("You already liked this post");
         });
 
         Like like = Like.builder()
@@ -46,9 +49,10 @@ public class LikeService {
     }
 
 
-        public void unlikePost(Long userId, Long postId) {
-        Like like = likeRepository.findByUserIdAndPostId(userId, postId)
-                .orElseThrow(() -> new ResourceNotFoundException("Like not found"));
+        public void unlikePost(Long postId) {
+        User user = currentUserService.getCurrentUser();
+        Like like = likeRepository.findByUserIdAndPostId(user.getId(), postId)
+                .orElseThrow(() -> new NotFoundException("Like not found"));
 
         likeRepository.delete(like);
     }
@@ -58,7 +62,8 @@ public class LikeService {
         return likeRepository.countByPostId(postId);
     }
 
-    public List<Like> getLikesByUser(Long userId) {
-        return likeRepository.findByUserId(userId);
+    public List<Like> getLikesByUser() {
+        User user = currentUserService.getCurrentUser();
+        return likeRepository.findByUserId(user.getId());
     }
 }

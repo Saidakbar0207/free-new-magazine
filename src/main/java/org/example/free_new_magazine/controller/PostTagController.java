@@ -1,7 +1,7 @@
 package org.example.free_new_magazine.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.example.free_new_magazine.entity.PostTag;
+import org.example.free_new_magazine.dto.PostTagDTO;
 import org.example.free_new_magazine.service.PostTagService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,14 +17,14 @@ public class PostTagController {
     private final PostTagService service;
 
     @PostMapping
-    public ResponseEntity<PostTag> addPostTag(@RequestBody PostTag postTag) {
-        PostTag saved = service.addPostTag(postTag);
+    public ResponseEntity<PostTagDTO> addPostTag(@RequestBody PostTagDTO postTag) {
+        PostTagDTO saved = service.addPostTag(postTag);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
     @GetMapping("/post/{postId}")
-    public ResponseEntity<List<PostTag>> getTagsByPost(@PathVariable Long postId) {
-        List<PostTag> tags = service.getTagsByPostId(postId);
+    public ResponseEntity<List<PostTagDTO>> getTagsByPost(@PathVariable Long postId) {
+        List<PostTagDTO> tags = service.getTagsByPostId(postId);
         return ResponseEntity.ok(tags);
     }
 

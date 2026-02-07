@@ -19,20 +19,16 @@ public class LikeController {
 
     @PostMapping
     public ResponseEntity<Like> likePost(
-            @RequestParam Long userId,
             @RequestParam Long postId
     ) {
-        Like like = likeService.likePost(userId, postId);
+        Like like = likeService.likePost(postId);
         return ResponseEntity.status(HttpStatus.CREATED).body(like);
     }
 
 
     @DeleteMapping
-    public ResponseEntity<Void> unlikePost(
-            @RequestParam Long userId,
-            @RequestParam Long postId
-    ) {
-        likeService.unlikePost(userId, postId);
+    public ResponseEntity<Void> unlikePost(@RequestParam Long postId) {
+        likeService.unlikePost(postId);
         return ResponseEntity.noContent().build();
     }
 
@@ -44,7 +40,7 @@ public class LikeController {
 
 
     @GetMapping("/user/{userId}")
-    public List<Like> getUserLikes(@PathVariable Long userId) {
-        return likeService.getLikesByUser(userId);
+    public List<Like> getUserLikes() {
+        return likeService.getLikesByUser();
     }
 }
