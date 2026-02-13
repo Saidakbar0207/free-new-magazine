@@ -11,6 +11,8 @@ import org.example.free_new_magazine.mapper.CategoryMapper;
 import org.example.free_new_magazine.repository.CategoryRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -64,6 +66,7 @@ public class CategoryService {
         return categoryMapper.toDTO(updated);
     }
 
+    @Transactional
     public void deleteCategory(Long id) {
        requiredAdmin();
         Category category = categoryRepository.findById(id)

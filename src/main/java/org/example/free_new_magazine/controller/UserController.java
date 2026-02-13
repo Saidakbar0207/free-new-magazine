@@ -42,6 +42,13 @@ public class UserController {
         return ResponseEntity.ok(userService.getUserByEmail(email));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/username/{username}")
+        public ResponseEntity<UserResponseDTO> getUserByUsername(@PathVariable String username) {
+        return ResponseEntity.ok(userService.getUserByUsername(username));
+    }
+
+
     @PutMapping("/{id}")
     public ResponseEntity<UserResponseDTO> updateUser(@PathVariable Long id, @Valid @RequestBody UserMeUpdateRequestDTO dto) {
         return ResponseEntity.ok(userService.updateUser(id, dto));

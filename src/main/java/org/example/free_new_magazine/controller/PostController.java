@@ -33,11 +33,13 @@
             return ResponseEntity.ok(postService.getPostById(id));
         }
 
-        @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+        @PostMapping(value =  "", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
         public ResponseEntity<PostResponseDTO> createPost(
-            @RequestPart("data") @Valid PostCreateDTO postCreateDTO,
-            @RequestPart(value = "file",required = false) MultipartFile file) {
-            return ResponseEntity.status(HttpStatus.CREATED).body(postService.createPost(postCreateDTO, file));
+            @RequestPart("data") String data,
+            @RequestPart(value = "file",required = false) MultipartFile file) throws Exception {
+            PostCreateDTO dto = new com.fasterxml.jackson.databind.ObjectMapper().readValue(data, PostCreateDTO.class);
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(postService.createPost(dto, file));
         }
 
 
@@ -51,7 +53,7 @@
             return postService.getPublicPosts(pageable);
         }
 
-        @GetMapping("/public{id}")
+        @GetMapping("/public/{id}")
         public PostResponseDTO publicById(@PathVariable Long id){
             return postService.getPostById(id);
         }

@@ -10,6 +10,7 @@ import org.example.free_new_magazine.repository.PostRepository;
 import org.example.free_new_magazine.repository.PostTagRepository;
 import org.example.free_new_magazine.repository.TagRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -53,10 +54,11 @@ public class PostTagService {
 
     public List<PostTagDTO> getTagsByPostId(Long postId) {
         List<PostTag> tags = postTagRepository.findByPostId(postId);
+       return postTagMapper.toDTO(tags);
 
-        return postTagMapper.toDTO(tags);
     }
 
+    @Transactional
     public void deletePostTag(Long id) {
             User me = currentUserService.getCurrentUser();
 

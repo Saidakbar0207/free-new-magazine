@@ -19,30 +19,28 @@ public class FollowController {
     private final FollowService followService;
 
     @GetMapping
-    public List<Follow> getAllFollows() {
+    public List<FollowDTO> getAllFollows() {
         return followService.getAllFollows();
     }
 
-    @PostMapping
-    public ResponseEntity<FollowDTO> createFollow(@RequestBody FollowDTO follow) {
-
-        FollowDTO savedFollow = followService.createFollow(follow);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedFollow);
+    @PostMapping("/{followingId}")
+    public ResponseEntity<FollowDTO> follow(@RequestBody Long followingId) {
+        return ResponseEntity.status(HttpStatus.CREATED).
+                body(followService.follow(followingId));
     }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteFollow(@PathVariable Long id) {
-        followService.deleteFollow(id);
+    @DeleteMapping("/{followingId}")
+    public ResponseEntity<Void> unfollow(@PathVariable Long followingId) {
+        followService.unfollow(followingId);
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/followers/{userId}")
-    public List<Follow> getFollowers(@PathVariable Long userId) {
-        return followService.getFollowers(userId);
+    @GetMapping("/me/followers")
+    public List<FollowDTO> myFollowers() {
+        return followService.getMyFollowers();
     }
 
-    @GetMapping("/following/{userId}")
-    public List<Follow> getFollowing(@PathVariable Long userId) {
-        return followService.getFollowing(userId);
+    @GetMapping("/me/following")
+    public List<FollowDTO> myFollowing() {
+        return followService.getMyFollowing();
     }
 }

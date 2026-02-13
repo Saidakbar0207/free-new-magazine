@@ -12,6 +12,7 @@ import org.example.free_new_magazine.mapper.SavedPostMapper;
 import org.example.free_new_magazine.repository.PostRepository;
 import org.example.free_new_magazine.repository.SavedPostRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -54,6 +55,7 @@ public class SavedPostService {
         savedPostRepository.save(savedPost);
     }
 
+    @Transactional
     public void unsave(Long postId) {
         User user = currentUserService.getCurrentUser();
         savedPostRepository.deleteByUser_IdAndPost_Id(user.getId(), postId);

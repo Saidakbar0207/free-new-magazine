@@ -12,6 +12,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.example.free_new_magazine.mapper.CommentMapper;
 import org.example.free_new_magazine.repository.CommentRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -76,6 +77,7 @@ public class CommentService {
     }
 
 
+    @Transactional
     public void deleteComment(Long id) {
         User user = currentUserService.getCurrentUser();
         Comment comment = commentRepository.findById(id)
