@@ -41,6 +41,9 @@ public class Post {
     @ToString.Exclude
     private Category category;
 
+    @Column(nullable = false)
+    private Boolean isDeleted;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id",nullable = false)
     @ToString.Exclude
@@ -67,7 +70,7 @@ public class Post {
 
     private PostStatus status;
 
-    private Boolean IsDeleted = false;
+
 
     private LocalDateTime createAt;
     private LocalDateTime updateAt;

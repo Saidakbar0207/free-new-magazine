@@ -24,44 +24,54 @@ public class FollowService {
     private final CurrentUserService currentUserService;
     private final UserService userService;
 
-    public List<Follow> getAllFollows() {
-        return followRepository.findAll();
+    public List<FollowDTO> getAllFollows() {
+        return followRepository.findAll()
+                .stream()
+                .map(followMapper::toDTO)
+                .toList();
     }
 
-    public FollowDTO createFollow(FollowDTO followDTO) {
+    public FollowDTO follow(Long followingId) {
         User follower = currentUserService.getCurrentUser();
-        User following = userService.getUserEntityById(followDTO.getFollowingId());
+        User following = userService.getUserEntityById(followingId);
 
-        if(followRepository.existsByFollowerIdAndFollowingId(follower.getId(), following.getId())){
-            throw new ConflictException("This follow already exists.");
+        if(follower.getId().equals(following.getId())) {
+            throw new ConflictException("You can't follow yourself");
         }
-        Follow f = new Follow();
-        f.setFollower(follower);
-        f.setFollowing(following);
-        Follow saved = followRepository.save(f);
-        return followMapper.toDTO(saved );
+
+        if(followRepository.existsByFollowerIdAndFollowingId(follower.getId(), following.getId())) {
+            throw new ConflictException("You are already following this user");
+        }
+        Follow follow = Follow.builder()
+                .follower(follower)
+                .following(following)
+                .build();
+        return followMapper.toDTO(followRepository.save(follow));
     }
 
     @Transactional
-    public void deleteFollow(Long id) {
-        User user = currentUserService.getCurrentUser();
-        Follow follow = followRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Follow not found with id: " + id));
-        boolean isOwner = follow.getFollower().getId().equals(user.getId());
-        boolean isAdmin = user.getRole() == Role.ROLE_ADMIN;
-        if(!isOwner && !isAdmin) {
-            throw new ForbiddenException("You are not allowed to delete this follow");
-        }
+    public void unfollow(Long followingId) {
+        User follower = currentUserService.getCurrentUser();
+        Follow follow = followRepository.findByFollowerIdAndFollowingId(follower.getId(), followingId)
+                .orElseThrow(() -> new NotFoundException("Follow not found"));
         followRepository.delete(follow);
-
-
     }
 
-    public List<Follow> getFollowers(Long userId) {
-        return followRepository.findByFollowingId(userId);
+    public List<FollowDTO> getMyFollowers() {
+        Long me = currentUserService.getCurrentUser().getId();
+        return followRepository.findByFollowingId(me)
+                .stream()
+                .map(followMapper::toDTO)
+                .toList();
     }
 
-    public List<Follow> getFollowing(Long userId) {
-        return followRepository.findByFollowerId(userId);
+    public List<FollowDTO> getMyFollowing(){
+        Long me = currentUserService.getCurrentUser().getId();
+        return followRepository.findByFollowerId(me)
+                .stream()
+                .map(followMapper::toDTO)
+                .toList();
     }
+
+
 }

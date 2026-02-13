@@ -13,6 +13,7 @@ import org.example.free_new_magazine.repository.UserRepository;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -97,6 +98,7 @@ public class UserService {
         return userMapper.toResponse(userNotFound);
     }
 
+    @Transactional
     public void deleteUser(Long id) {
         User target = getUserEntityById(id);
         User currentUser = currentUserService.getCurrentUser();
@@ -167,4 +169,10 @@ public class UserService {
         return e.isBlank() ? null : e.toLowerCase();
     }
 
+    public UserResponseDTO getUserByUsername(String username) {
+        if(username == null || username.isBlank()) return null;
+        return repository.findByUsername(username)
+                .map(userMapper::toResponse)
+                .orElse(null);
+    }
 }

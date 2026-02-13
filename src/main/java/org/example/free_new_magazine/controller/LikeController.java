@@ -1,6 +1,7 @@
 package org.example.free_new_magazine.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.example.free_new_magazine.dto.LikeDTO;
 import org.example.free_new_magazine.entity.Like;
 import org.example.free_new_magazine.service.LikeService;
 import org.springframework.http.HttpStatus;
@@ -18,13 +19,9 @@ public class LikeController {
 
 
     @PostMapping
-    public ResponseEntity<Like> likePost(
-            @RequestParam Long postId
-    ) {
-        Like like = likeService.likePost(postId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(like);
+    public ResponseEntity<LikeDTO> likePost(@RequestParam Long postId) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(likeService.likePost(postId));
     }
-
 
     @DeleteMapping
     public ResponseEntity<Void> unlikePost(@RequestParam Long postId) {
@@ -39,8 +36,8 @@ public class LikeController {
     }
 
 
-    @GetMapping("/user/{userId}")
-    public List<Like> getUserLikes() {
+    @GetMapping("/user")
+    public List<LikeDTO> getLikesByUser() {
         return likeService.getLikesByUser();
     }
 }

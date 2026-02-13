@@ -5,6 +5,7 @@ import org.example.free_new_magazine.entity.Tag;
 import org.example.free_new_magazine.exception.NotFoundException;
 import org.example.free_new_magazine.repository.TagRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -26,6 +27,7 @@ public class TagService {
         return repository.findById(id).orElseThrow(() -> new NotFoundException("Tag not found"));
     }
 
+    @Transactional
     public void deleteTag(Long id) {
         repository.deleteById(id);
     }

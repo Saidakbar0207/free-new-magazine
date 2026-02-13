@@ -19,6 +19,7 @@
     import org.example.free_new_magazine.repository.CategoryRepository;
     import org.example.free_new_magazine.repository.PostRepository;
     import org.springframework.stereotype.Service;
+    import org.springframework.transaction.annotation.Transactional;
     import org.springframework.web.multipart.MultipartFile;
 
     import java.util.List;
@@ -162,6 +163,7 @@
 
 
 
+        @Transactional
         public void deletePost(Long id) {
 
             User user = currentUserService.getCurrentUser();

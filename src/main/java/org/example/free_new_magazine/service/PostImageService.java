@@ -4,6 +4,7 @@ import org.example.free_new_magazine.entity.PostImage;
 import org.example.free_new_magazine.exception.NotFoundException;
 import org.example.free_new_magazine.repository.PostImageRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -39,6 +40,7 @@ public class PostImageService {
         return postImageRepository.save(postImage);
     }
 
+    @Transactional
     public void deleteImage(Long id) {
         postImageRepository.deleteById(id);
     }
