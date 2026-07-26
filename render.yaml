@@ -1,0 +1,43 @@
+services:
+  - type: web
+    name: free-new-magazine-backend
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    autoDeploy: true
+
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+
+      - key: DB_HOST
+        fromDatabase:
+          name: free-new-magazine-db
+          property: host
+
+      - key: DB_PORT
+        fromDatabase:
+          name: free-new-magazine-db
+          property: port
+
+      - key: DB_NAME
+        fromDatabase:
+          name: free-new-magazine-db
+          property: database
+
+      - key: SPRING_DATASOURCE_USERNAME
+        fromDatabase:
+          name: free-new-magazine-db
+          property: user
+
+      - key: SPRING_DATASOURCE_PASSWORD
+        fromDatabase:
+          name: free-new-magazine-db
+          property: password
+
+databases:
+  - name: free-new-magazine-db
+    plan: free
+    databaseName: magazine
+    user: magazine_user
