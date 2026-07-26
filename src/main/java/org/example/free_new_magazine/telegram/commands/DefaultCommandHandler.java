@@ -22,7 +22,6 @@ public class DefaultCommandHandler implements BotCommand {
 
     @Override
     public String getCommandName() {
-
         return "DEFAULT";
     }
 }

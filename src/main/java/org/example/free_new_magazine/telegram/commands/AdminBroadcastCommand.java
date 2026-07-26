@@ -1,4 +1,4 @@
-package org.example.free_new_magazine.telegram.handler.command;
+package org.example.free_new_magazine.telegram.commands;
 
 import lombok.RequiredArgsConstructor;
 import org.example.free_new_magazine.entity.TelegramUser;
