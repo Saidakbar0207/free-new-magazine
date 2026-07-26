@@ -3,6 +3,8 @@ package org.example.free_new_magazine.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.proxy.HibernateProxy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -33,7 +35,11 @@ public class Category {
 
     private String code;
 
+    @CreatedDate
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdDate;
+
+    @LastModifiedDate
     private LocalDateTime updatedDate;
 
     @PrePersist

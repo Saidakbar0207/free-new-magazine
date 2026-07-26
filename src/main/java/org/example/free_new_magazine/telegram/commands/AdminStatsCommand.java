@@ -1,12 +1,15 @@
-package org.example.free_new_magazine.telegram.handler.command;
+package org.example.free_new_magazine.telegram.commands;
 
 import lombok.RequiredArgsConstructor;
 import org.example.free_new_magazine.repository.TelegramUserCategoryRepository;
 import org.example.free_new_magazine.repository.TelegramUserRepository;
+import org.example.free_new_magazine.repository.UserRepository;
 import org.example.free_new_magazine.telegram.config.TelegramBotConfig;
 import org.example.free_new_magazine.telegram.service.TelegramSenderService;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
+
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor

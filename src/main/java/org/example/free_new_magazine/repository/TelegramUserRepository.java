@@ -17,5 +17,6 @@ public interface TelegramUserRepository extends JpaRepository<TelegramUser,Long>
     List<TelegramUser> findAllByActiveTrue();
 
     long countByActiveTrue();
-    
+
+
 }
