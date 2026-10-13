@@ -32,7 +32,9 @@ public class SwaggerConfig {
                         .license(new License().name("Apache 2.0").url("http://springdoc.org"))
                 )
                 .servers(List.of(
-                        new Server().url("http://localhost:8090").description("Development server")
+                        new Server().url("http://localhost:8090").description("Development server"),
+                        new Server().url("https://news-magazine-backend.onrender.com").description("Production server")
+
 
                 ))
                 .addSecurityItem(new SecurityRequirement().addList(SECURITY_SCHEME_NAME))

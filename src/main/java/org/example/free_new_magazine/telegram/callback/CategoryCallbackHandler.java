@@ -39,8 +39,5 @@ public class CategoryCallbackHandler implements CallbackHandler {
         }
     }
 
-    @Override
-    public String getCallbackCode() {
-        return "category:";
-    }
+
 }

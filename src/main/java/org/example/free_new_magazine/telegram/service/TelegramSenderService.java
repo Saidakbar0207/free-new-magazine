@@ -1,6 +1,5 @@
     package org.example.free_new_magazine.telegram.service;
-    
-    import lombok.RequiredArgsConstructor;
+
     import lombok.extern.slf4j.Slf4j;
     import org.example.free_new_magazine.telegram.bot.FreeNewsTelegramBot;
     import org.springframework.context.annotation.Lazy;
